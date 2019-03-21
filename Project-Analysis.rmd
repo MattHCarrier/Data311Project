@@ -14,7 +14,6 @@ We are using the suicide dataset from Kaggle: https://www.kaggle.com/russellyate
 We are reading the data below. The dataset is successfully loading into the environment completely and 
 reading the data
 ```{r}
-setwd("/Users/raphaelchevallier/Downloads")
 data = read.csv("master.csv", header = TRUE)
 attach(data)
 data
