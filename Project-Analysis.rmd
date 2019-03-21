@@ -25,5 +25,39 @@ plot(sex, suicides_no)
 X = lm(suicides_no ~ sex, data = data)
 abline(X, col = "red", lwd=3)
 ```
+```{r}
+library(gclus)
+library(MLmetrics)
+library(caret)
+library(MASS)
+```
+```{r}
+set.seed(456)
+head(data)
+sum(is.na(data))
+preProcValues<-preProcess(data,method = c("knnImpute","center","scale"))
+data_processed<-predict(preProcValues,data)
+sum(is.na(data_processed))
+```
+```{r}
+train.index<-createDataPartition(
+  y=data$suicides_no,
+  p=.75,
+  list=FALSE
+)
+training<-data[train.index,]
+testing<-data[-train.index,]
+```
+
+```{r}
+cv.method<-trainControl(method="cv", number=10)
+lm<-train(suicides_no~population,data=training,method="lm",trControl=cv.method,na.action = na.exclude)
+summary(lm)
+lm.predict<-predict(lm,newdata = testing)
+```
+```{r}
+plot(population, suicides_no)
+abline(lm, col = "red", lwd=3)
+```
 
 
