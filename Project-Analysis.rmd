@@ -1,0 +1,30 @@
+---
+title: "Project Data Analysis"
+author: "Raphael Chevallier"
+date: "3/7/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Our group preliminary analysis of our dataset.
+
+We are using the suicide dataset from Kaggle: https://www.kaggle.com/russellyates88/suicide-rates-overview-1985-to-2016
+We are reading the data below. The dataset is successfully loading into the environment completely and 
+reading the data
+```{r}
+setwd("/Users/raphaelchevallier/Downloads")
+data = read.csv("master.csv", header = TRUE)
+attach(data)
+data
+```
+
+Below we do a very quick analysis of some of the data. We decide to plot the values of suicide number and sex to see. We can clearly tell alot more males suicide vs females. We even perform a simple linear model with suicide number as the response and sex as the determining variable. Although it doesn't show much it's just to see how the dataset responds
+```{r}
+plot(sex, suicides_no)
+X = lm(suicides_no ~ sex, data = data)
+abline(X, col = "red", lwd=3)
+```
+
+
