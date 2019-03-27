@@ -11,9 +11,24 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Cleaning the data of missing points and inconsistencies
 ```{r}
-setwd("/Users/raphaelchevallier/Downloads")
-data = read.csv("master.csv", header = TRUE)
+setwd("/Users/raphaelchevallier/Documents/DATA311/DATA311Project")
+data = read.csv("Cost_of_living_index.csv", header = TRUE)
 attach(data)
-completeData = data[complete.cases(data[setdiff(names(data), 'HDI.for.year')]),]
-completeData
+data
+```
+
+# Basic Visualization of the data and getting acquainted with it
+```{r}
+dim(data) #get the dimensiality of dataset
+sapply(data, class) #get the class of the dataset
+levels(data$City) #see all the different factors in the City variable
+summary(data)#get the basic summary of the whole dataset
+```
+
+#Random Forest Analysis
+```{r}
+library(randomForest)
+countryRate = randomForest(country ~ suicides.100k.pop + year + gdp_per_capita.... +  population, data = completeData)#limit randomise variable for forest so not all variables used like bagging
+importance(countryRate)
+summary(countryRate)
 ```
