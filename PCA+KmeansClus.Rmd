@@ -1,0 +1,66 @@
+---
+title: "Project311"
+author: "Mark Meyer"
+date: "March 23, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Data Read:
+```{r, include=FALSE}
+#install.packages("rgl")
+#install.packages("tidyr")
+library(tidyr)
+library(RColorBrewer)
+library(scales)
+library(rgl)
+library(cluster)
+library(mclust)
+library(MASS)
+library(class)
+library(MLmetrics)
+data <- read.csv("Cost_of_living_index.csv", stringsAsFactors = FALSE, header = TRUE)
+```
+Cleaning Data for PCA:
+```{r}
+data_clean <- data[,-c(1,2)]
+```
+PCA ANALYSIS + K-MEANS CLUSTERING:
+```{r}
+#ALL PRINCIPAL COMPONENTS PRESENT
+pComp <- prcomp(as.matrix(data_clean[,-c(2)]), scale = TRUE, center = TRUE)
+biplot(pComp, main="PC BiPlot")
+plot(pComp, main = "Screeplot A")
+plot(pComp, type='l', main = "Screeplot B")
+allcomp <- data.frame(pComp$x[,1:5])
+plot(allcomp, pch=16, col=rgb(0,0,0,0.5), main="All PC's Projection")
+#Kaiser recommends to keep 1 PC
+#To keep 95% of the variance keep 2 PC's
+#screeplot recommends to keep 2 PC's
+
+#WITH TWO PRINCIPLAL COMPONENTS RETAINED
+retainedcomp <- data.frame(pComp$x[,1:2])
+plot(retainedcomp, pch=16, col=rgb(0,0,0,0.5), main="Retainded PC1 and PC2 Projection")
+summary(pComp)
+round(pComp$rotation[,1:5],2)
+
+```
+
+```{r}
+#Determining Number of Clusters
+withinSumSquares <- (nrow(data_clean)-1)*sum(apply(data_clean,2,var))
+for (i in 2:535) withinSumSquares[i] <- sum(kmeans(data_clean,centers=i)$withinss)
+plot(1:535, withinSumSquares, type="b", xlab="Number of Clusters", ylab="Within groups sum of squares", main="Within groups sum of squares VS clusters")
+#We should choose k=5 as shown from the Within groups sum of squares VS clusters plot.
+myKmean <- kmeans((retainedcomp), 5)
+myKmean
+palette(alpha(brewer.pal(9,'Set1'), 0.5))
+plot(allcomp, col=myKmean$cluster, pch=16, main="All PC's K-Means Cluster Projection")
+plot(retainedcomp, col=myKmean$cluster, pch=16, main="Retained PC's K-Means Cluster Projection")
+# Cluster Sizes
+myKmean$size
+# Centers
+myKmean$centers
+```
