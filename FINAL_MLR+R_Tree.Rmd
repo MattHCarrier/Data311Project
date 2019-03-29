@@ -57,13 +57,13 @@ By removing the "Cost of Living Index" from the Regression Tree Analysis we see 
 
 
 ```{r}
-#library(tree)
-#set.seed(450)
-#cvsimtree <- cv.tree(as.matrix(simtree), FUN=prune.tree, K=10)
-#plot(cvsimtree, type="b")
-#newtree <- prune.tree(as.matrix(simtree), best=7)
-#plot(newtree)
-#text(newtree, pretty=0)
+library(tree)
+set.seed(450)
+cvsimtree <- cv.tree(as.matrix(simtree), FUN=prune.tree, K=10)
+plot(cvsimtree, type="b")
+newtree <- prune.tree(as.matrix(simtree), best=7)
+plot(newtree)
+text(newtree, pretty=0)
 ```
 
 

@@ -15,7 +15,7 @@ Data Read:
 library(tidyr)
 library(RColorBrewer)
 library(scales)
-library(rgl)
+#library(rgl)
 library(cluster)
 library(mclust)
 library(MASS)
@@ -49,6 +49,7 @@ round(pComp$rotation[,1:5],2)
 ```
 
 ```{r}
+set.seed(450)
 #Determining Number of Clusters
 withinSumSquares <- (nrow(data_clean)-1)*sum(apply(data_clean,2,var))
 for (i in 2:535) withinSumSquares[i] <- sum(kmeans(data_clean,centers=i)$withinss)

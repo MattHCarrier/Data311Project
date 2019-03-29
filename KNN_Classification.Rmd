@@ -1,0 +1,32 @@
+---
+title: "KNN-classification"
+author: "Matt Carrier"
+date: "March 29, 2019"
+output: pdf_document
+---
+
+```{r}
+livingIndex<-read.csv("Cost_of_living_index.csv")
+library(caret)
+```
+
+#splitting data
+```{r}
+set.seed(450)
+train<-createDataPartition(y=livingIndex$Rank,p=.7,list=F)
+training<-livingIndex[train,]
+testing<-livingIndex[-train,]
+```
+#10 fold cross validation repeated three times
+```{r}
+set.seed(450)
+control<-trainControl(method="repeatedcv",number = 10,repeats=3)
+knn<-train(Rank~.,data=training,method="knn",trControl=control)
+```
+
+```{r}
+set.seed(450)
+test<-predict(knn,newdata = testing)
+mean((testing$Rank-test)^2)
+```
+
