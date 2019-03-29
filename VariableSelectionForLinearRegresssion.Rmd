@@ -1,0 +1,67 @@
+---
+title: "LM and VariableSelection"
+author: "Tyler Kreway"
+date: "March 29, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+cl= read.csv("Cost_of_living_index.csv", header= TRUE)
+attach(cl)
+set.seed(450)
+```
+
+#Variable Selection with Linear Regression Analysis
+```{r}
+#we will perform a linear regression to predict rank based on all other variables
+
+#We just have to get rid of the numerical predictor ()
+dataCL=data.frame(cl$Rank,cl$Cost.of.Living.Index,cl$Rent.Index,cl$Cost.of.Living.Plus.Rent.Index,cl$Groceries.Index,cl$Restaurant.Price.Index,cl$Local.Purchasing.Power.Index)
+head(dataCL)
+
+lm<- lm(Rank ~ ., data=dataCL)
+summary(lm)
+```
+This won't tell us too much with all the predictors (some of which may be not significant predictors)
+
+We will backward selection manually using alpha = 0.05 as a threshold. We will go one-by-one removing all the predictors with p-values > 0.05.
+
+```{r}
+
+summary(lm(Rank ~ ., data=dataCL))
+# The predictor with the greatest p-value is Local Purchasing Power Index (with a p-value of 0.956), so we will remove that one
+
+summary(lm(Rank ~ dataCL$cl.Cost.of.Living.Index+dataCL$cl.Rent.Index+dataCL$cl.Cost.of.Living.Plus.Rent.Index+dataCL$cl.Groceries.Index+dataCL$cl.Restaurant.Price.Index, data=dataCL))
+# The remaining predictor with the greatest p-value is Cost of Living Index (with a p-value of 0.75946), so we will remove that one.
+#This is interesting as one would assume cost of living would be highly related to the rank of the city.
+
+summary(lm(Rank ~ dataCL$cl.Rent.Index+dataCL$cl.Cost.of.Living.Plus.Rent.Index+dataCL$cl.Groceries.Index+dataCL$cl.Restaurant.Price.Index, data=dataCL))
+# The remaining predictor with the greatest p-value is Restaurant Price Index (with a p-value of 0.39982), so we will remove that one  
+
+summary(lm(Rank ~ dataCL$cl.Rent.Index+dataCL$cl.Cost.of.Living.Plus.Rent.Index+dataCL$cl.Groceries.Index, data=dataCL))
+#all significant (p-values < 0.05)
+
+finalLinearMod= (lm(Rank ~ dataCL$cl.Rent.Index+dataCL$cl.Cost.of.Living.Plus.Rent.Index+dataCL$cl.Groceries.Index, data=dataCL))
+``` 
+
+The remaining 3 predictors (Rent Index, Cost of Living Plus Rent Index, Groceries Index), now have p-values <  alpha = 0.05, so these predictors will remain in our final linear model. 
+
+To clarify, this analysis was not done to actually predict the rank based on factors (as will be done in the majority of our analyses) but to explore the predictors (Which are significant and which are not? Why might this be the case?) 
+
+This process of variable selection helps to show us the most significant predictors in determining Rank of a city (a high rank corresponds to high overall cost to live in that city). 
+
+This gives us an equation of the line of 
+Rank= 6.4237*Rent.Index - 14.9792*Cost.of.Living.Plus.Rent.Index + 0.9240*Groceries.Index + 690.4663
+
+It was unsurprising to see Rent Index was a significant predictor of overall cost of living as rent is the largest expense for most people. 
+
+At first, it was surprising that Cost of Living Index (excludes rent) by itself wasn't a significant predictor of rank. One may think this would be significant, as it seems in direct relation to overall cost to live in that city (and thus, its rank).
+However, it appears that cost of living index only becomes significant when rent index is considered along with it. This makes sense with the large magnitude of rent - even if other living expenses are cheap, if housing is expensive, the overall price to live will still likely be high (and vice.versa).
+
+Groceries Index is the only non-rent related significant predictor. This is a bit surprising but a potential explanation is certain cities due to isolation from other cities (relatively small islands for example) have very high grocery prices due to shipping costs. These additional costs could be very significant (and has no relation to rent as rent could be low with high grocery prices). To exemplify this, the number 1 ranked city (most expensive to live in overall) has a high Groceries Index of 126.56 (26.56% higher than New York City), and is located on a (relatively) small island. 
+
+Overall, this linear regression variable selection gives us an idea on which variables are most significant predictors in determining Rank. This is important for interpretability. It becomes difficult to interpret linear regression (and other methods) when they are many variables (as there may be lots of interaction effect and noise). This interaction effect will be discussed in the multiple linear regression analysis.
