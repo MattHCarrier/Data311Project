@@ -1,0 +1,70 @@
+---
+title: "P1"
+author: "Simran Tejay"
+date: '2019-03-25'
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+DataRead:
+```{r}
+data <- read.csv("Cost_of_living_index.csv", header=TRUE)
+```
+
+## Multiple Linear Regression
+
+```{r}
+fit <- lm(data$Rank~data$Cost.of.Living.Index+data$Rent.Index+data$Cost.of.Living.Plus.Rent.Index+data$Groceries.Index+data$Restaurant.Price.Index+data$Local.Purchasing.Power.Index)
+summary(fit)
+```
+By performing a Multiple Linear Regression on this dataset, with "Rank" being the response variable, we are able to determine how much of an influence each predictor has on the response variable "Rank". This measure of significance is expressed in the above summary output of the data where we can see that the "Rank" increases relative to the estimate values for the predictor variables. Using this method of analysis we can determine that, for instance, as the "Cost of Living Index" increases, the rate at which rank will increase by is 53.49352. The influence of the "Rent Index" is also very similar with a estimate of 55.09453. An interesting predictor that has a negative correlation with respect to rank is the "Cost of Living Plus Rent Index" where the rank of the city increases as the predictor decreases at a rate estimate of -117.73226. Lastly the "Groceries Index", "Restaurant Price Index", and "Local Purchasing Power Index" predictors are less significant predictors with respect to the ranking of countries compared to the "Cost of Living Index" and "Rent Index". Therefore, the cost of living index, rank index and cost of living plus rent index have the greatest influence on the rank of the countries within this dataset and are the most significant predictors with respect to the rank of a country. While the remaining predictors are far less significant in comparison. We are able to draw this inference since our Adjusted R-squared is equal to 0.9345 which tells us there is minor variation as the independent variables explain our response variable. 
+
+
+## Regression Tree
+```{r}
+library(tree)
+library(gclus)
+data1 <- data.frame(data)
+rank <- data1$Rank
+city <- data1$City
+cost_of_living <- data1$Cost.of.Living.Index
+rent <- data1$Rent.Index
+living_plus_rent <- data1$Cost.of.Living.Plus.Rent.Index 
+groceries <- data1$Groceries.Index
+restaurant <- data1$Restaurant.Price.Index
+purchasing_power <- data1$Local.Purchasing.Power.Index
+
+simtree <- tree(rank~cost_of_living+rent+living_plus_rent+groceries+restaurant+purchasing_power)
+summary(simtree)
+plot(simtree)
+text(simtree, pretty=0)
+```
+After performing a Regression Tree analysis of the dataset we are presented with the tree above. At first glance we notice that all tree splitting is done with respect to "Cost of Living Index" and this can be because of many things. In this case the splitting happens on this predictor variable due to the fact that it is greatly correlated to the rank of a country. This characteristic was also observed in our Multiple Linear Regression Analysis proving that the "Cost of Living Index" significantly influences a countries given rank. Another noticeable trait is that there is a linear relation such that as the "Cost of Living Index" increases, the rank of a country increasesalong with it. In other words a counrty that is expensive to live in whith respect to taxes, food, rent, etc. will also be a very successful and thriving counrty nonetheless. This may not come off as a surprise, but as a given person within their respective country is spending more than the average person on living costs, their quality of living is often higher than average aswell. Notice that the Regression Tree summary provides us with an absurdly large MSE of 379.7. This is to be expected as we are indeed overfitting the data and also the fact that the rank is greatly influenced by the "Cost of Living Index". Although this analysis does not help us draw any real inference as to how the other predictor variables affect the rank, we have proved that the "Cost of Living Index" is the most significant. 
+
+
+```{r}
+simtree1 <- tree(rank~rent+living_plus_rent+groceries+restaurant+purchasing_power)
+summary(simtree1)
+plot(simtree1)
+text(simtree1, pretty=0)
+```
+By removing the "Cost of Living Index" from the Regression Tree Analysis we see that the splitting occurs with respect to the "Cost of Living Plus Rent Index". This proves that the second most significant predictor variable is indeed "Cost of Living Plus Rent Index". It also becomes evident that as the "Cost of Living Plus Rent Index" increases, the rank decreases, showing that there is a negative correltion between the two variables. This was also determined in the Multiple Linear Regression Analysis and has become solidified as a result of this analysis. Removing a predictor variable has resulted in a larger MSE of 1938 which is also expected.
+
+
+```{r}
+#library(tree)
+#set.seed(450)
+#cvsimtree <- cv.tree(as.matrix(simtree), FUN=prune.tree, K=10)
+#plot(cvsimtree, type="b")
+#newtree <- prune.tree(as.matrix(simtree), best=7)
+#plot(newtree)
+#text(newtree, pretty=0)
+```
+
+
+
