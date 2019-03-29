@@ -21,12 +21,22 @@ testing<-livingIndex[-train,]
 ```{r}
 set.seed(450)
 control<-trainControl(method="repeatedcv",number = 10,repeats=3)
-knn<-train(Rank~.,data=training,method="knn",trControl=control)
+knn<-train(Rank~.,data=training,method="knn",trControl=control,preProcess=c("center","scale"),tuneLength=20)
+knn
+```
+
+```{r}
+library(MLmetrics)
+```
+
+```{r}
+plot(knn)
 ```
 
 ```{r}
 set.seed(450)
 test<-predict(knn,newdata = testing)
 mean((testing$Rank-test)^2)
+
 ```
 
