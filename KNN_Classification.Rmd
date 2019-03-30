@@ -40,3 +40,9 @@ mean((testing$Rank-test)^2)
 
 ```
 
+#final MSE
+
+```{r}
+combine.MSE<-data.frame(MSE=c("793.363","379.7","39.64"),type=c("knn","regression tree","Multiple linear regression",))
+```
+
