@@ -43,6 +43,11 @@ mean((testing$Rank-test)^2)
 #final MSE
 
 ```{r}
-combine.MSE<-data.frame(MSE=c("793.363","379.7","39.64"),type=c("knn","regression tree","Multiple linear regression",))
+all.MSE<-data.frame(MSE=c("793.363","379.7","39.64","1.71","374"),Model=c("knn classification","regression tree","Multiple linear regression","Random Forest","regression tree"))
+```
+
+```{r}
+ggplot(data=all.MSE,aes(x=Model,y=MSE)) +
+  geom_bar(stat="identity")
 ```
 

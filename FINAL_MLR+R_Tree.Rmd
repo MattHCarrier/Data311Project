@@ -29,17 +29,9 @@ By performing a Multiple Linear Regression on this dataset, with "Rank" being th
 ```{r}
 library(tree)
 library(gclus)
-data1 <- data.frame(data)
-rank <- data1$Rank
-city <- data1$City
-cost_of_living <- data1$Cost.of.Living.Index
-rent <- data1$Rent.Index
-living_plus_rent <- data1$Cost.of.Living.Plus.Rent.Index 
-groceries <- data1$Groceries.Index
-restaurant <- data1$Restaurant.Price.Index
-purchasing_power <- data1$Local.Purchasing.Power.Index
-
-simtree <- tree(rank~cost_of_living+rent+living_plus_rent+groceries+restaurant+purchasing_power)
+head(data1)
+data1 <- data[,-2]
+simtree <- tree(Rank~cost_of_living+rent+living_plus_rent+groceries+restaurant+purchasing_power,data = data1)
 summary(simtree)
 plot(simtree)
 text(simtree, pretty=0)
@@ -48,7 +40,7 @@ After performing a Regression Tree analysis of the dataset we are presented with
 
 
 ```{r}
-simtree1 <- tree(rank~rent+living_plus_rent+groceries+restaurant+purchasing_power)
+simtree1 <- tree(Rank~.,data=data1)
 summary(simtree1)
 plot(simtree1)
 text(simtree1, pretty=0)
@@ -59,11 +51,13 @@ By removing the "Cost of Living Index" from the Regression Tree Analysis we see 
 ```{r}
 library(tree)
 set.seed(450)
-cvsimtree <- cv.tree(as.matrix(simtree), FUN=prune.tree, K=10)
+cvsimtree <- cv.tree(simtree, FUN=prune.tree, K=10)
 plot(cvsimtree, type="b")
-newtree <- prune.tree(as.matrix(simtree), best=7)
+newtree <- prune.tree(simtree, best=7)
 plot(newtree)
 text(newtree, pretty=0)
+test_predict<-predict(newtree,data1)
+mean((data1$Rank-test_predict)^2)
 ```
 
 

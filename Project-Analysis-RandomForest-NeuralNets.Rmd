@@ -36,6 +36,7 @@ summary(cityRate1)
 prediction1 = predict(cityRate1, data)
 solution1 = data.frame(City = data$City, Cost.of.Living.Index = prediction1)
 solution1
+
 ```
 
 Here we notice that the MSE of the random forest is quite low. The results of classifying the cities by cost of living is pretty accurate in many cases. Of course this is due to the fact that we are using the whole data set for both training the model and running the model.
@@ -56,6 +57,7 @@ prediction2 = predict(cityRate2, test)
 #prediction
 solution2 = data.frame(City = test$City, Cost.of.Living.Index = prediction2)
 solution2
+
 ```
 
 Here we implement the idea of having two seperate datasets by splitting the data in train and test. This produces a bigger MSE and a bit less accuracy however it performs well at classifying unseen data with a cost of living and is still viable at classifying for cost of living each city. As this is a Random Forest algorithm, cross validation is unnecessary for overfitting problem due to the OOB error estimate as it is tested internally. We can also see from the commented out model that rent and local purchasing power were ineffective for the model so we decided to leave them out
