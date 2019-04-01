@@ -1,0 +1,53 @@
+---
+title: "KNN-classification"
+author: "Matt Carrier"
+date: "March 29, 2019"
+output: pdf_document
+---
+
+```{r}
+livingIndex<-read.csv("Cost_of_living_index.csv")
+library(caret)
+```
+
+#splitting data
+```{r}
+set.seed(450)
+train<-createDataPartition(y=livingIndex$Rank,p=.7,list=F)
+training<-livingIndex[train,]
+testing<-livingIndex[-train,]
+```
+#10 fold cross validation repeated three times
+```{r}
+set.seed(450)
+control<-trainControl(method="repeatedcv",number = 10,repeats=3)
+knn<-train(Rank~.,data=training,method="knn",trControl=control,preProcess=c("center","scale"),tuneLength=20)
+knn
+```
+
+```{r}
+library(MLmetrics)
+```
+
+```{r}
+plot(knn)
+```
+
+```{r}
+set.seed(450)
+test<-predict(knn,newdata = testing)
+mean((testing$Rank-test)^2)
+
+```
+
+#final MSE
+
+```{r}
+all.MSE<-data.frame(MSE=c("793.363","379.7","39.64","1.71","374"),Model=c("knn classification","regression tree","Multiple linear regression","Random Forest","regression tree"))
+```
+
+```{r}
+ggplot(data=all.MSE,aes(x=Model,y=MSE)) +
+  geom_bar(stat="identity")
+```
+
