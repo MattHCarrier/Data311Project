@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 data = read.csv("Cost_of_living_index.csv", header = TRUE)
 attach(data)
 data
+set.seed(450)
 ```
 
 # Basic Visualization of the data and getting acquainted with it
@@ -27,7 +28,6 @@ summary(data)#get the basic summary of the whole dataset
 
 # First draft Random Forest with no training/testing data seperation
 ```{r}
-set.seed(450)
 library(randomForest)
 cityRate1 = randomForest(Cost.of.Living.Index ~ Rank + Rent.Index + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index + Local.Purchasing.Power.Index, data = data, importance = TRUE, ntree = 500, mtry = 2)#limit randomise variable for forest
 cityRate1
@@ -43,7 +43,6 @@ Here we notice that the MSE of the random forest is quite low. The results of cl
 
 #Random Forest Analysis with test and training to predict Cost of Living
 ```{r}
-set.seed(450)
 library(randomForest)
 trainindex <- sample(1:nrow(data), 200)
 train <- droplevels(data[trainindex, ])
@@ -57,11 +56,6 @@ prediction2 = predict(cityRate2, test)
 #prediction
 solution2 = data.frame(City = test$City, Cost.of.Living.Index = prediction2)
 solution2
-<<<<<<< HEAD
-plot(cityRate2)
-=======
-
->>>>>>> 8243a18c1bcd4fd775731bb2295878ac0d92e65e
 ```
 
 Here we implement the idea of having two seperate datasets by splitting the data in train and test. This produces a bigger MSE and a bit less accuracy however it performs well at classifying unseen data with a cost of living and is still viable at classifying for cost of living each city. As this is a Random Forest algorithm, cross validation is unnecessary for overfitting problem due to the OOB error estimate as it is tested internally. We can also see from the commented out model that rent and local purchasing power were ineffective for the model so we decided to leave them out
@@ -71,7 +65,6 @@ Here we build our neural network to try and analyze the data. We build the model
 ```{r}
 library(NeuralNetTools)
 library(neuralnet)
-set.seed(450)
 nums = unlist(lapply(data, is.numeric))  
 dataNums = data[ , nums]
 scar <- apply(dataNums, 2, function(v) (v-min(v))/(max(v)-min(v)))
