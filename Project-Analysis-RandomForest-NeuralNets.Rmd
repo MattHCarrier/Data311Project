@@ -48,7 +48,7 @@ trainindex <- sample(1:nrow(data), 200)
 train <- droplevels(data[trainindex, ])
 test <- droplevels(data[-trainindex, ])
 #cityRate2 = randomForest(Cost.of.Living.Index ~ Rank + Rent.Index + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index + Local.Purchasing.Power.Index, data = train, ntree = 500, mtry = 2, importance = TRUE)#limit randomise variable for forest
-cityRate2 = randomForest(Cost.of.Living.Index ~ Rank + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index, data = train, ntree = 500, mtry = 2, importance = TRUE, do.trace=T)#limit randomise variable for forest, shown that rent and local purchasing power were not very important at all compared to other variables
+cityRate2 = randomForest(Cost.of.Living.Index ~ Rank + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index, data = train, ntree = 100, mtry = 2, importance = TRUE, do.trace=T)#limit randomise variable for forest, shown that rent and local purchasing power were not very important at all compared to other variables
 cityRate2
 importance(cityRate2)
 summary(cityRate2)
@@ -56,6 +56,7 @@ prediction2 = predict(cityRate2, test)
 #prediction
 solution2 = data.frame(City = test$City, Cost.of.Living.Index = prediction2)
 solution2
+plot(cityRate2)
 ```
 
 Here we implement the idea of having two seperate datasets by splitting the data in train and test. This produces a bigger MSE and a bit less accuracy however it performs well at classifying unseen data with a cost of living and is still viable at classifying for cost of living each city. As this is a Random Forest algorithm, cross validation is unnecessary for overfitting problem due to the OOB error estimate as it is tested internally. We can also see from the commented out model that rent and local purchasing power were ineffective for the model so we decided to leave them out
@@ -87,6 +88,7 @@ result <- nn.results$net.result
 original_values <- max.col(scar)
 results <- max.col(result)
 mean(results == original_values)#accuracy rate
+sum((compute(nn2, test[,-2])$net.result-test[,2])^2)
 ```
 The result of accuracy now for the neural network is at almost 46%. This shows to be very low. We want to see if we can make this any better. Therefore we perform K-Fold CV on the neural net below to see if there is significantly better at building the neural network to get more accurate results
 
