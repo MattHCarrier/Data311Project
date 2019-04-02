@@ -1,0 +1,332 @@
+---
+title: "Final-Project-Analysis"
+author: "Raphael Chevallier, Ty Kreway, Matt Carrier, Mark Meyer, Simran Tejay"
+date: "4/1/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Cleaned data and setting up environment with dataset
+```{r}
+#set whatever directory you have your data in
+setwd("/Users/raphaelchevallier/Documents/DATA311/DATA311Project")
+data = read.csv("Cost_of_living_index.csv", header = TRUE)
+attach(data)
+data
+set.seed(450)
+```
+
+# Basic Visualization of the data and getting acquainted with it
+```{r}
+dim(data) #get the dimensiality of dataset
+sapply(data, class) #get the class of the dataset
+levels(data$City) #see all the different factors in the City variable
+summary(data)#get the basic summary of the whole dataset
+```
+
+# Variable Selection with Linear Regression Analysis
+```{r}
+#we will perform a linear regression to predict rank based on all other variables
+
+#We just have to get rid of the numerical predictor ()
+CL=data.frame(data$Rank,data$Cost.of.Living.Index,data$Rent.Index,data$Cost.of.Living.Plus.Rent.Index,data$Groceries.Index,data$Restaurant.Price.Index,data$Local.Purchasing.Power.Index)
+head(CL)
+
+lm<- lm(Rank ~ ., data=CL)
+summary(lm)
+```
+This won't tell us too much with all the predictors (some of which may be not significant predictors)
+
+We will backward selection manually using alpha = 0.05 as a threshold. We will go one-by-one removing all the predictors with p-values > 0.05.
+
+```{r}
+
+summary(lm(Rank ~ ., data=CL))
+# The predictor with the greatest p-value is Local Purchasing Power Index (with a p-value of 0.956), so we will remove that one
+
+summary(lm(Rank ~ CL$data.Cost.of.Living.Index+CL$data.Rent.Index+CL$data.Cost.of.Living.Plus.Rent.Index+CL$data.Groceries.Index+CL$data.Restaurant.Price.Index, data=CL))
+# The remaining predictor with the greatest p-value is Cost of Living Index (with a p-value of 0.75946), so we will remove that one.
+#This is interesting as one would assume cost of living would be highly related to the rank of the city.
+
+summary(lm(Rank ~ CL$data.Rent.Index+CL$data.Cost.of.Living.Plus.Rent.Index+CL$data.Groceries.Index+CL$data.Restaurant.Price.Index, data=CL))
+# The remaining predictor with the greatest p-value is Restaurant Price Index (with a p-value of 0.39982), so we will remove that one  
+
+summary(lm(Rank ~ CL$data.Rent.Index+CL$data.Cost.of.Living.Plus.Rent.Index+CL$data.Groceries.Index, data=CL))
+#all significant (p-values < 0.05)
+
+finalLinearMod= (lm(Rank ~ CL$data.Rent.Index+CL$data.Cost.of.Living.Plus.Rent.Index+CL$data.Groceries.Index, data=CL))
+``` 
+
+The remaining 3 predictors (Rent Index, Cost of Living Plus Rent Index, Groceries Index), now have p-values <  alpha = 0.05, so these predictors will remain in our final linear model. 
+
+To clarify, this analysis was not done to actually predict the rank based on factors (as will be done in the majority of our analyses) but to explore the predictors (Which are significant and which are not? Why might this be the case?) 
+
+This process of variable selection helps to show us the most significant predictors in determining Rank of a city (a high rank corresponds to high overall cost to live in that city). 
+
+This gives us an equation of the line of 
+Rank= 6.4237*Rent.Index - 14.9792*Cost.of.Living.Plus.Rent.Index + 0.9240*Groceries.Index + 690.4663
+
+It was unsurprising to see Rent Index was a significant predictor of overall cost of living as rent is the largest expense for most people. 
+
+At first, it was surprising that Cost of Living Index (excludes rent) by itself wasn't a significant predictor of rank. One may think this would be significant, as it seems in direct relation to overall cost to live in that city (and thus, its rank).
+However, it appears that cost of living index only becomes significant when rent index is considered along with it. This makes sense with the large magnitude of rent - even if other living expenses are cheap, if housing is expensive, the overall price to live will still likely be high (and vice.versa).
+
+Groceries Index is the only non-rent related significant predictor. This is a bit surprising but a potential explanation is certain cities due to isolation from other cities (relatively small islands for example) have very high grocery prices due to shipping costs. These additional costs could be very significant (and has no relation to rent as rent could be low with high grocery prices). To exemplify this, the number 1 ranked city (most expensive to live in overall) has a high Groceries Index of 126.56 (26.56% higher than New York City), and is located on a (relatively) small island. 
+
+Overall, this linear regression variable selection gives us an idea on which variables are most significant predictors in determining Rank. This is important for interpretability. It becomes difficult to interpret linear regression (and other methods) when they are many variables (as there may be lots of interaction effect and noise). This interaction effect will be discussed in the multiple linear regression analysis.
+
+# Multiple Linear Regression
+```{r}
+fit <- lm(data$Rank~data$Cost.of.Living.Index+data$Rent.Index+data$Cost.of.Living.Plus.Rent.Index+data$Groceries.Index+data$Restaurant.Price.Index+data$Local.Purchasing.Power.Index)
+summary(fit)
+```
+By performing a Multiple Linear Regression on this dataset, with "Rank" being the response variable, we are able to determine how much of an influence each predictor has on the response variable "Rank". This measure of significance is expressed in the above summary output of the data where we can see that the "Rank" increases relative to the estimate values for the predictor variables. Using this method of analysis we can determine that, for instance, as the "Cost of Living Index" increases, the rate at which rank will increase by is 53.49352. The influence of the "Rent Index" is also very similar with a estimate of 55.09453. An interesting predictor that has a negative correlation with respect to rank is the "Cost of Living Plus Rent Index" where the rank of the city increases as the predictor decreases at a rate estimate of -117.73226. Lastly the "Groceries Index", "Restaurant Price Index", and "Local Purchasing Power Index" predictors are less significant predictors with respect to the ranking of countries compared to the "Cost of Living Index" and "Rent Index". Therefore, the cost of living index, rank index and cost of living plus rent index have the greatest influence on the rank of the countries within this dataset and are the most significant predictors with respect to the rank of a country. While the remaining predictors are far less significant in comparison. We are able to draw this inference since our Adjusted R-squared is equal to 0.9345 which tells us there is minor variation as the independent variables explain our response variable. 
+
+
+# Regression Tree
+```{r}
+library(tree)
+library(gclus)
+data1 <- data[,-2]
+head(data1)
+simtree <- tree(Rank~Cost.of.Living.Index+Rent.Index+Cost.of.Living.Plus.Rent.Index+Groceries.Index+Restaurant.Price.Index+Local.Purchasing.Power.Index,data = data1)
+summary(simtree)
+plot(simtree)
+text(simtree, pretty=0)
+```
+After performing a Regression Tree analysis of the dataset we are presented with the tree above. At first glance we notice that all tree splitting is done with respect to "Cost of Living Index" and this can be because of many things. In this case the splitting happens on this predictor variable due to the fact that it is greatly correlated to the rank of a country. This characteristic was also observed in our Multiple Linear Regression Analysis proving that the "Cost of Living Index" significantly influences a countries given rank. Another noticeable trait is that there is a linear relation such that as the "Cost of Living Index" increases, the rank of a country increasesalong with it. In other words a counrty that is expensive to live in whith respect to taxes, food, rent, etc. will also be a very successful and thriving counrty nonetheless. This may not come off as a surprise, but as a given person within their respective country is spending more than the average person on living costs, their quality of living is often higher than average aswell. Notice that the Regression Tree summary provides us with an absurdly large MSE of 379.7. This is to be expected as we are indeed overfitting the data and also the fact that the rank is greatly influenced by the "Cost of Living Index". Although this analysis does not help us draw any real inference as to how the other predictor variables affect the rank, we have proved that the "Cost of Living Index" is the most significant. 
+
+
+```{r}
+simtree1 <- tree(Rank~.,data=data1)
+summary(simtree1)
+plot(simtree1)
+text(simtree1, pretty=0)
+```
+By removing the "Cost of Living Index" from the Regression Tree Analysis we see that the splitting occurs with respect to the "Cost of Living Plus Rent Index". This proves that the second most significant predictor variable is indeed "Cost of Living Plus Rent Index". It also becomes evident that as the "Cost of Living Plus Rent Index" increases, the rank decreases, showing that there is a negative correltion between the two variables. This was also determined in the Multiple Linear Regression Analysis and has become solidified as a result of this analysis. Removing a predictor variable has resulted in a larger MSE of 1938 which is also expected.
+
+
+```{r}
+library(tree)
+cvsimtree <- cv.tree(simtree, FUN=prune.tree, K=10)
+plot(cvsimtree, type="b")
+newtree <- prune.tree(simtree, best=7)
+plot(newtree)
+text(newtree, pretty=0)
+test_predict<-predict(newtree,data1)
+mean((data1$Rank-test_predict)^2)
+```
+
+# KNN-Classification
+
+## splitting data
+```{r}
+library(caret)
+train<-createDataPartition(y=data$Rank,p=.7,list=F)
+training<-data[train,]
+testing<-data[-train,]
+```
+## 10 fold cross validation repeated three times
+```{r}
+control<-trainControl(method="repeatedcv",number = 10,repeats=3)
+knn<-train(Rank~.,data=training,method="knn",trControl=control,preProcess=c("center","scale"),tuneLength=20)
+knn
+```
+
+```{r}
+library(MLmetrics)
+```
+
+```{r}
+plot(knn)
+```
+
+```{r}
+test<-predict(knn,newdata = testing)
+mean((testing$Rank-test)^2)
+
+```
+
+## final MSE
+```{r}
+all.MSE<-data.frame(MSE=c("793.363","379.7","39.64","1.71","374"),Model=c("knn classification","regression tree","Multiple linear regression","Random Forest","regression tree"))
+```
+
+```{r}
+ggplot(data=all.MSE,aes(x=Model,y=MSE)) +
+  geom_bar(stat="identity")
+```
+
+# PCA + K-Means
+```{r, include=FALSE}
+#install.packages("rgl")
+#install.packages("tidyr")
+library(tidyr)
+library(RColorBrewer)
+library(scales)
+#library(rgl)
+library(cluster)
+library(mclust)
+library(MASS)
+library(class)
+library(MLmetrics)
+```
+Cleaning Data for PCA:
+```{r}
+data_clean <- data[,-c(1,2)]
+```
+PCA ANALYSIS + K-MEANS CLUSTERING:
+```{r}
+#ALL PRINCIPAL COMPONENTS PRESENT
+pComp <- prcomp(as.matrix(data_clean[,-c(2)]), scale = TRUE, center = TRUE)
+biplot(pComp, main="PC BiPlot")
+plot(pComp, main = "Screeplot A")
+plot(pComp, type='l', main = "Screeplot B")
+allcomp <- data.frame(pComp$x[,1:5])
+plot(allcomp, pch=16, col=rgb(0,0,0,0.5), main="All PC's Projection")
+#Kaiser recommends to keep 1 PC
+#To keep 95% of the variance keep 2 PC's
+#screeplot recommends to keep 2 PC's
+
+#WITH TWO PRINCIPLAL COMPONENTS RETAINED
+retainedcomp <- data.frame(pComp$x[,1:2])
+plot(retainedcomp, pch=16, col=rgb(0,0,0,0.5), main="Retainded PC1 and PC2 Projection")
+summary(pComp)
+round(pComp$rotation[,1:5],2)
+
+```
+
+```{r}
+#Determining Number of Clusters
+withinSumSquares <- (nrow(data_clean)-1)*sum(apply(data_clean,2,var))
+for (i in 2:535) withinSumSquares[i] <- sum(kmeans(data_clean,centers=i)$withinss)
+plot(1:535, withinSumSquares, type="b", xlab="Number of Clusters", ylab="Within groups sum of squares", main="Within groups sum of squares")
+#We should choose k=5 as shown from the Within groups sum of squares plot.
+myKmean <- kmeans((retainedcomp), 5)
+myKmean
+palette(alpha(brewer.pal(9,'Set1'), 0.5))
+plot(allcomp, col=myKmean$cluster, pch=16, main="All PC's K-Means Cluster Projection")
+plot(retainedcomp, col=myKmean$cluster, pch=16, main="Retained PC's K-Means Cluster Projection")
+# Centers
+myKmean$centers
+# Cluster sizes
+groups <- data.frame(myKmean$cluster)
+table(groups)
+# Cities by cluster
+data[myKmean$cluster==1,]
+data[myKmean$cluster==2,]
+data[myKmean$cluster==3,]
+data[myKmean$cluster==4,]
+data[myKmean$cluster==5,]
+
+#sqrt(rowSums(data[,3:8] - fitted(myKmean)) ^ 2)
+
+```
+
+Write up:
+
+  In order to discover strong patterns from our large data set, we conduct a principal component analysis. Moreover, to conduct the analysis, non-numeric data was removed as well as rank (since rank and cost of living index are 100% correlated). We begin our analysis by constructing a biplot (loading plot) to visualize how strongly each characteristic influences the first two principal components. Although the biplot is somewhat hard to read, we see that almost all variables are strongly influencing the second principal component, with the exception being Purchasing.Power.Index which is more evenly inluencing both of the first two principal components. The biplot also shows us how characteristics correlate with one another, and so it seems purchasing power index has a low correlation with all the other variables, yet those variables are all highly correlated with one another. In an attempt to gain more information we plot a 2D-projection of all the principal components and realize very little useful information. To analyze our principal coponents further, we look at the summary statistics for our analysis to see which principal components we can toss out. By the Kaiser method (SD>1) we should retain just one principal component. However if we wish to retain at least 90% of the variance in the data we should retain two principal components, which is supported by our scree plots. Therefore we interpret the weights of the first two principal components. Judging the first principal component, we notice high negative loadings on all the variables, meaning all variables are negatively correlates with each other. Thus the loadings on the first principal component seem to represent places where it is very expensive to live despite the low correlation between the various predictor variables. Futhermore, the loadings on the second principal component seem to represent places where it is very expensive to live yet your money goea a lot further in terms of purchasing power. Clearly, there is some distinct grouping in this data set. That is, cities are grouped based on some distinct characteristics contributing to their ranks. This is well vizualized in our plotted projection of the retained components.  
+  Now that we have simpified our data and found some patterns, we are going to classify these "unique" cities into clusters using K-means for further understanding. First we need to determine the number of clusters (k) to use. Here we find k by plotting our whithin group sum of squares and finding the "elbow" in the plot. Examinig our within group sum of squares plot we conclude a k equal to five should be used. Five is quite unexpected, since the plotted projection of the retained components seemingly forshadows two distinct groups. Next, we go ahead and run our k-means classifier using our chosen value for k, and plot the results. Our retained PC's k-means cluster projection plot beautifully depicts five distinct groups. Finally we print out our groups and interpret the results of our k-means. These results are incredibly interesting. Broadly, the groups seem to be representative of regions of similar levels of wealth. This makes perfect sense, since you would expect cities in regions/nations of similar wealth to have a similar cost of living. Strikinginly, however, cities seem to be slightly grouped by the similar economic policy of their respective country. Our first cluster for instance, contains a high volume of the total cities from Switzerland, Bermuda, Iceland, and Norway, all of whom are famous for having significantly developed service sectors, especially their respective banking industries. This trent continues throughout the groups. Lastly, due to the large variance in cluster size, within groups sum of squares was not an accurate measure of perfomance, though when calculating the maximum euclidean distance from the centroids, we received similar values for all but one group.
+
+# Random Forest and Neural Network Regression
+
+## First draft Random Forest with no training/testing data seperation
+```{r}
+library(randomForest)
+cityRate1 = randomForest(Cost.of.Living.Index ~ Rank + Rent.Index + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index + Local.Purchasing.Power.Index, data = data, importance = TRUE, ntree = 500, mtry = 2)#limit randomise variable for forest
+cityRate1
+importance(cityRate1)
+summary(cityRate1)
+prediction1 = predict(cityRate1, data)
+solution1 = data.frame(City = data$City, Cost.of.Living.Index = prediction1)
+solution1
+
+```
+
+Here we notice that the MSE of the random forest is quite low. The results of classifying the cities by cost of living is pretty accurate in many cases. Of course this is due to the fact that we are using the whole data set for both training the model and running the model.
+
+## Random Forest Analysis with test and training to predict Cost of Living
+```{r}
+library(randomForest)
+trainindex <- sample(1:nrow(data), 200)
+train <- droplevels(data[trainindex, ])
+test <- droplevels(data[-trainindex, ])
+#cityRate2 = randomForest(Cost.of.Living.Index ~ Rank + Rent.Index + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index + Local.Purchasing.Power.Index, data = train, ntree = 500, mtry = 2, importance = TRUE)#limit randomise variable for forest
+cityRate2 = randomForest(Cost.of.Living.Index ~ Rank + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index, data = train, ntree = 100, mtry = 2, importance = TRUE, do.trace=T)#limit randomise variable for forest, shown that rent and local purchasing power were not very important at all compared to other variables
+cityRate2
+importance(cityRate2)
+summary(cityRate2)
+prediction2 = predict(cityRate2, test)
+#prediction
+solution2 = data.frame(City = test$City, Cost.of.Living.Index = prediction2)
+solution2
+```
+
+Here we implement the idea of having two seperate datasets by splitting the data in train and test. This produces a bigger MSE and a bit less accuracy however it performs well at classifying unseen data with a cost of living and is still viable at classifying for cost of living each city. As this is a Random Forest algorithm, cross validation is unnecessary for overfitting problem due to the OOB error estimate as it is tested internally. We can also see from the commented out model that rent and local purchasing power were ineffective for the model so we decided to leave them out
+
+## Neural Net Analysis
+Here we build our neural network to try and analyze the data. We build the model with the full dataset first here. We have to first normalize the data.
+```{r}
+library(NeuralNetTools)
+library(neuralnet)
+nums = unlist(lapply(data, is.numeric))  
+dataNums = data[ , nums]
+scar <- apply(dataNums, 2, function(v) (v-min(v))/(max(v)-min(v)))
+ind <- sample(1:nrow(scar), 300)
+train <- scar[ind, ]
+test <- scar[-ind, ]
+nn = neuralnet(Cost.of.Living.Index ~ Rank + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index, data=scar, hidden=c(5,3), linear.output = TRUE)
+nn$result.matrix
+plot(nn)
+summary(nn)
+```
+We see a low error rate of .02964 from the neural network when using the full dataset to complete its task. This is quite respectable but we want to know if we are overfitting which is quite possible. Below we implement the same neural network but with a test and train seperation
+
+### Using test data for accuracy rate
+```{r}
+nn2 = neuralnet(Cost.of.Living.Index ~ Rank + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index, data=train, hidden=c(5,3), linear.output = TRUE)
+nn.results <- compute(nn2, test)
+result <- nn.results$net.result
+original_values <- max.col(scar)
+results <- max.col(result)
+mean(results == original_values)#accuracy rate
+sum((compute(nn2, test[,-2])$net.result-test[,2])^2)
+```
+The result of accuracy now for the neural network is at almost 46%. This shows to be very low. We want to see if we can make this any better. Therefore we perform K-Fold CV on the neural net below to see if there is significantly better at building the neural network to get more accurate results
+
+### K-Fold - Neural Net
+```{r}
+# 10 fold cross validation
+k <- 10
+# Results from cv
+outs <- NULL
+# Train test split proportions
+proportion <- 0.95 # Set to 0.995 for LOOCV
+
+for(i in 1:k)
+{
+    index <- sample(1:nrow(scar), round(proportion*nrow(scar)))
+    train_cv <- scar[index, ]
+    test_cv <- scar[-index, ]
+    nn_cv <- neuralnet(Cost.of.Living.Index ~ Rank + Rent.Index + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index + Local.Purchasing.Power.Index,
+                        data = train,
+                        hidden = c(13, 10, 3),
+                        act.fct = "logistic",
+                        linear.output = FALSE)
+    
+    # Compute predictions
+    pr.nn <- compute(nn_cv, test)
+    # Extract results
+    pr.nn_ <- pr.nn$net.result
+    # Accuracy (test set)
+    original_values <- max.col(test)
+    pr.nn_2 <- max.col(pr.nn_)
+    outs[i] <- mean(pr.nn_2 == original_values)
+}
+outs
+mean(outs)
+```
+After performing the CV we realize that the neural network is about average of 47% accurate which is almost exactly of what we get above. Therefore this neural network would not be a very good choice to use to predict Cost of Living index
