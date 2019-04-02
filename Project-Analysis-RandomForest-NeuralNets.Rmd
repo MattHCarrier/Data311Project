@@ -36,7 +36,8 @@ summary(cityRate1)
 prediction1 = predict(cityRate1, data)
 solution1 = data.frame(City = data$City, Cost.of.Living.Index = prediction1)
 solution1
-
+plot(cityRate1)
+varImpPlot(cityRate1)
 ```
 
 Here we notice that the MSE of the random forest is quite low. The results of classifying the cities by cost of living is pretty accurate in many cases. Of course this is due to the fact that we are using the whole data set for both training the model and running the model.

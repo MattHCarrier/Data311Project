@@ -36,14 +36,14 @@ plot(knn)
 ```{r}
 set.seed(450)
 test<-predict(knn,newdata = testing)
-mean((testing$Rank-test)^2)
+postResample(test,testing$Rank)
 
 ```
 
 #final MSE
 
 ```{r}
-all.MSE<-data.frame(MSE=c("793.363","379.7","39.64","1.71","374"),Model=c("knn classification","regression tree","Multiple linear regression","Random Forest","regression tree"))
+all.MSE<-data.frame(MSE=c(793.363,379.7,39.64,6.71),Model=c("knn classification","regression tree","Multiple linear regression","Random Forest"))
 ```
 
 ```{r}

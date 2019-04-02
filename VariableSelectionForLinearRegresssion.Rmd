@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, include=FALSE}
-cl= read.csv("Cost_of_living_index.csv", header= TRUE)
+cl<-read.csv("Cost_of_living_index.csv", header= TRUE)
 attach(cl)
 set.seed(450)
 ```
@@ -20,7 +20,7 @@ set.seed(450)
 #we will perform a linear regression to predict rank based on all other variables
 
 #We just have to get rid of the numerical predictor ()
-dataCL=data.frame(cl$Rank,cl$Cost.of.Living.Index,cl$Rent.Index,cl$Cost.of.Living.Plus.Rent.Index,cl$Groceries.Index,cl$Restaurant.Price.Index,cl$Local.Purchasing.Power.Index)
+dataCL<-data.frame(cl$Rank,cl$Cost.of.Living.Index,cl$Rent.Index,cl$Cost.of.Living.Plus.Rent.Index,cl$Groceries.Index,cl$Restaurant.Price.Index,cl$Local.Purchasing.Power.Index)
 head(dataCL)
 
 lm<- lm(Rank ~ ., data=dataCL)
@@ -65,3 +65,29 @@ However, it appears that cost of living index only becomes significant when rent
 Groceries Index is the only non-rent related significant predictor. This is a bit surprising but a potential explanation is certain cities due to isolation from other cities (relatively small islands for example) have very high grocery prices due to shipping costs. These additional costs could be very significant (and has no relation to rent as rent could be low with high grocery prices). To exemplify this, the number 1 ranked city (most expensive to live in overall) has a high Groceries Index of 126.56 (26.56% higher than New York City), and is located on a (relatively) small island. 
 
 Overall, this linear regression variable selection gives us an idea on which variables are most significant predictors in determining Rank. This is important for interpretability. It becomes difficult to interpret linear regression (and other methods) when they are many variables (as there may be lots of interaction effect and noise). This interaction effect will be discussed in the multiple linear regression analysis.
+
+```{r}
+#splitting data
+
+set.seed(450)
+train<-createDataPartition(y=datacl$Rank,p=.7,list=F)
+training<-livingIndex[train,]
+testing<-livingIndex[-train,]
+training<-training[,-2]
+testing<-testing[,-2]
+```
+```{r}
+#making model
+set.seed(450)
+control<-trainControl(method="cv",number = 10)
+##linearregression with backward selection
+LM<-train(Rank~.,data=training,method="leapBackward",trControl=control)
+```
+```{r}
+print(LM)
+```
+```{r}
+test<-predict(LM,newdata = testing)
+postResample(test,testing$Rank)
+```
+

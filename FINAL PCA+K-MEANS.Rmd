@@ -30,7 +30,7 @@ data_clean <- data[,-c(1,2)]
 PCA ANALYSIS + K-MEANS CLUSTERING:
 ```{r}
 #ALL PRINCIPAL COMPONENTS PRESENT
-pComp <- prcomp(as.matrix(data_clean[,-c(2)]), scale = TRUE, center = TRUE)
+pComp <- prcomp(as.matrix(data_clean[,-c(2)]), scale. = TRUE, center = TRUE)
 biplot(pComp, main="PC BiPlot")
 plot(pComp, main = "Screeplot A")
 plot(pComp, type='l', main = "Screeplot B")
