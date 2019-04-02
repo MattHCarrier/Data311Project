@@ -1,3 +1,85 @@
+<<<<<<< HEAD
+---
+title: "FINAL PCA + K-MEANS"
+author: "Mark Meyer"
+date: "March 28, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Data Read:
+```{r, include=FALSE}
+#install.packages("rgl")
+#install.packages("tidyr")
+library(tidyr)
+library(RColorBrewer)
+library(scales)
+#library(rgl)
+library(cluster)
+library(mclust)
+library(MASS)
+library(class)
+library(MLmetrics)
+data <- read.csv("Cost_of_living_index.csv", stringsAsFactors = FALSE, header = TRUE)
+```
+Cleaning Data for PCA:
+```{r}
+data_clean <- data[,-c(1,2)]
+```
+PCA ANALYSIS + K-MEANS CLUSTERING:
+```{r}
+#ALL PRINCIPAL COMPONENTS PRESENT
+pComp <- prcomp(as.matrix(data_clean[,-c(2)]), scale. = TRUE, center = TRUE)
+biplot(pComp, main="PC BiPlot")
+plot(pComp, main = "Screeplot A")
+plot(pComp, type='l', main = "Screeplot B")
+allcomp <- data.frame(pComp$x[,1:5])
+plot(allcomp, pch=16, col=rgb(0,0,0,0.5), main="All PC's Projection")
+#Kaiser recommends to keep 1 PC
+#To keep 95% of the variance keep 2 PC's
+#screeplot recommends to keep 2 PC's
+
+#WITH TWO PRINCIPLAL COMPONENTS RETAINED
+retainedcomp <- data.frame(pComp$x[,1:2])
+plot(retainedcomp, pch=16, col=rgb(0,0,0,0.5), main="Retainded PC1 and PC2 Projection")
+summary(pComp)
+round(pComp$rotation[,1:5],2)
+
+```
+
+```{r}
+set.seed(450)
+#Determining Number of Clusters
+withinSumSquares <- (nrow(data_clean)-1)*sum(apply(data_clean,2,var))
+for (i in 2:535) withinSumSquares[i] <- sum(kmeans(data_clean,centers=i)$withinss)
+plot(1:535, withinSumSquares, type="b", xlab="Number of Clusters", ylab="Within groups sum of squares", main="Within groups sum of squares")
+#We should choose k=5 as shown from the Within groups sum of squares plot.
+myKmean <- kmeans((retainedcomp), 5)
+myKmean
+palette(alpha(brewer.pal(9,'Set1'), 0.5))
+plot(allcomp, col=myKmean$cluster, pch=16, main="All PC's K-Means Cluster Projection")
+plot(retainedcomp, col=myKmean$cluster, pch=16, main="Retained PC's K-Means Cluster Projection")
+# Centers
+myKmean$centers
+# Cluster sizes
+groups <- data.frame(myKmean$cluster)
+table(groups)
+# Cities by cluster
+data[myKmean$cluster==1,]
+data[myKmean$cluster==2,]
+data[myKmean$cluster==3,]
+data[myKmean$cluster==4,]
+data[myKmean$cluster==5,]
+
+```
+
+Write up:
+
+  In order to discover strong patterns from our large data set, we conduct a principal component analysis. Moreover, to conduct the analysis, non-numeric data was removed as well as rank (since rank and cost of living index are 100% correlated). We begin our analysis by constructing a biplot (loading plot) to visualize how strongly each characteristic influences the first two principal components. Although the biplot is somewhat hard to read, we see that almost all variables are strongly influencing the second principal component, with the exception being Purchasing.Power.Index which is more evenly inluencing both of the first two principal components. The biplot also shows us how characteristics correlate with one another, and so it seems purchasing power index has a low correlation with all the other variables, yet those variables are all highly correlated with one another. In an attempt to gain more information we plot a 2D-projection of all the principal components and realize very little useful information. To analyze our principal coponents further, we look at the summary statistics for our analysis to see which principal components we can toss out. By the Kaiser method (SD>1) we should retain just one principal component. However if we wish to retain at least 90% of the variance in the data we should retain two principal components, which is supported by our scree plots. Therefore we interpret the weights of the first two principal components. Judging the first principal component, we notice high negative loadings on all the variables, meaning all variables are negatively correlates with each other. Thus the loadings on the first principal component seem to represent places where it is very expensive to live despite the low correlation between the various predictor variables. Futhermore, the loadings on the second principal component seem to represent places where it is very expensive to live yet your money goea a lot further in terms of purchasing power. Clearly, there is some distinct grouping in this data set. That is, cities are grouped based on some distinct characteristics contributing to their ranks. This is well vizualized in our plotted projection of the retained components.  
+  Now that we have simpified our data and found some patterns, we are going to classify these "unique" cities into clusters using K-means for further understanding. First we need to determine the number of clusters (k) to use. Here we find k by plotting our whithin group sum of squares and finding the "elbow" in the plot. Examinig our within group sum of squares plot we conclude a k equal to five should be used. Five is quite unexpected, since the plotted projection of the retained components seemingly forshadows two distinct groups. Next, we go ahead and run our k-means classifier using our chosen value for k, and plot the results. Our retained PC's k-means cluster projection plot beautifully depicts five distinct groups. Finally we print out our groups and interpret the results of our k-means. These results are incredibly interesting. Broadly, the groups seem to be representative of regions of similar levels of wealth. This makes perfect sense, since you would expect cities in regions/nations of similar wealth to have a similar cost of living. However, cities seem to be grouped by the similar economic policy of their respective country. Our first cluster for instance, contains only cities from Switzerland, Bermuda, Iceland, and Norway, all of whom are famous for sheltering large amounts of money. This trend continues throughout the groups.
+=======
 ---
 title: "FINAL PCA + K-MEANS"
 author: "Mark Meyer"
@@ -80,3 +162,4 @@ Write up:
 
   In order to discover strong patterns from our large data set, we conduct a principal component analysis. Moreover, to conduct the analysis, non-numeric data was removed as well as rank (since rank and cost of living index are 100% correlated). We begin our analysis by constructing a biplot (loading plot) to visualize how strongly each characteristic influences the first two principal components. Although the biplot is somewhat hard to read, we see that almost all variables are strongly influencing the second principal component, with the exception being Purchasing.Power.Index which is more evenly inluencing both of the first two principal components. The biplot also shows us how characteristics correlate with one another, and so it seems purchasing power index has a low correlation with all the other variables, yet those variables are all highly correlated with one another. In an attempt to gain more information we plot a 2D-projection of all the principal components and realize very little useful information. To analyze our principal coponents further, we look at the summary statistics for our analysis to see which principal components we can toss out. By the Kaiser method (SD>1) we should retain just one principal component. However if we wish to retain at least 90% of the variance in the data we should retain two principal components, which is supported by our scree plots. Therefore we interpret the weights of the first two principal components. Judging the first principal component, we notice high negative loadings on all the variables, meaning all variables are negatively correlates with each other. Thus the loadings on the first principal component seem to represent places where it is very expensive to live despite the low correlation between the various predictor variables. Futhermore, the loadings on the second principal component seem to represent places where it is very expensive to live yet your money goea a lot further in terms of purchasing power. Clearly, there is some distinct grouping in this data set. That is, cities are grouped based on some distinct characteristics contributing to their ranks. This is well vizualized in our plotted projection of the retained components.  
   Now that we have simpified our data and found some patterns, we are going to classify these "unique" cities into clusters using K-means for further understanding. First we need to determine the number of clusters (k) to use. Here we find k by plotting our whithin group sum of squares and finding the "elbow" in the plot. Examinig our within group sum of squares plot we conclude a k equal to five should be used. Five is quite unexpected, since the plotted projection of the retained components seemingly forshadows two distinct groups. Next, we go ahead and run our k-means classifier using our chosen value for k, and plot the results. Our retained PC's k-means cluster projection plot beautifully depicts five distinct groups. Finally we print out our groups and interpret the results of our k-means. These results are incredibly interesting. Broadly, the groups seem to be representative of regions of similar levels of wealth. This makes perfect sense, since you would expect cities in regions/nations of similar wealth to have a similar cost of living. Strikinginly, however, cities seem to be slightly grouped by the similar economic policy of their respective country. Our first cluster for instance, contains a high volume of the total cities from Switzerland, Bermuda, Iceland, and Norway, all of whom are famous for having significantly developed service sectors, especially their respective banking industries. This trent continues throughout the groups. Lastly, due to the large variance in cluster size, within groups sum of squares was not an accurate measure of perfomance, though when calculating the maximum euclidean distance from the centroids, we received similar values for all but one group.
+>>>>>>> 4c959411ab39d28f6b3adcb1f150c2c890dc265c

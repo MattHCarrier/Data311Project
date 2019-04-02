@@ -36,6 +36,10 @@ summary(cityRate1)
 prediction1 = predict(cityRate1, data)
 solution1 = data.frame(City = data$City, Cost.of.Living.Index = prediction1)
 solution1
+<<<<<<< HEAD
+=======
+plot(cityRate1)
+>>>>>>> 9aa387a21b730bd3c70597b66c1ded9abd9e5611
 varImpPlot(cityRate1)
 ```
 
