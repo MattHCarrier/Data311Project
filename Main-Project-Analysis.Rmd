@@ -301,7 +301,7 @@ We see a low error rate of .02964 from the neural network when using the full da
 nn2 = neuralnet(Cost.of.Living.Index ~ Rank + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index, data=train, hidden=c(5,3), linear.output = TRUE)
 nn.results <- compute(nn2, test)
 result <- nn.results$net.result
-result
+#result
 sum((compute(nn2, test[,-2])$net.result-test[,2])^2) #mse
 ```
 Even with the same test/train seperation we still get a very low erro rate of .029 MSE with the results still scaled above. We perform K-Fold CV on the neural net below to see if there is significantly better at building the neural network to get more accurate results
