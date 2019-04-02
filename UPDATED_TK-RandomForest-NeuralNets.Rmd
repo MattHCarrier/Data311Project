@@ -1,0 +1,129 @@
+---
+title: "Project Analysis - Random Forest and Neural Network Classifying by Cost of Living"
+author: "Raphael Chevallier, Ty Kreway, Matt Carrier, Mark Meyer, Simran Tejay"
+date: "3/21/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Cleaning the data of missing points and inconsistencies
+```{r}
+#setwd("/Users/raphaelchevallier/Documents/DATA311/DATA311Project")
+data = read.csv("Cost_of_living_index.csv", header = TRUE)
+attach(data)
+data
+set.seed(450)
+```
+
+# Basic Visualization of the data and getting acquainted with it
+```{r}
+dim(data) #get the dimensiality of dataset
+sapply(data, class) #get the class of the dataset
+levels(data$City) #see all the different factors in the City variable
+summary(data)#get the basic summary of the whole dataset
+```
+
+# First draft Random Forest with no training/testing data seperation
+```{r}
+library(randomForest)
+cityRate1 = randomForest(Cost.of.Living.Index ~ Rank + Rent.Index + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index + Local.Purchasing.Power.Index, data = data, importance = TRUE, ntree = 500, mtry = 2)#limit randomise variable for forest
+cityRate1
+importance(cityRate1)
+summary(cityRate1)
+prediction1 = predict(cityRate1, data)
+solution1 = data.frame(City = data$City, Cost.of.Living.Index = prediction1)
+solution1
+plot(cityRate1)
+varImpPlot(cityRate1)
+```
+
+Here we notice that the MSE of the random forest is quite low. The results of classifying the cities by cost of living is pretty accurate in many cases. Of course this is due to the fact that we are using the whole data set for both training the model and running the model.
+
+#Random Forest Analysis with test and training to predict Cost of Living
+```{r}
+library(randomForest)
+trainindex <- sample(1:nrow(data), 200)
+train <- droplevels(data[trainindex, ])
+test <- droplevels(data[-trainindex, ])
+#cityRate2 = randomForest(Cost.of.Living.Index ~ Rank + Rent.Index + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index + Local.Purchasing.Power.Index, data = train, ntree = 500, mtry = 2, importance = TRUE)#limit randomise variable for forest
+cityRate2 = randomForest(Rank ~ Cost.of.Living.Index + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index +Rent.Index+Local.Purchasing.Power.Index, data = train, ntree = 100, mtry = 2, importance = TRUE, do.trace=T)#limit randomise variable for forest, shown that rent and local purchasing power were not very important at all compared to other variables
+cityRate2
+importance(cityRate2)
+summary(cityRate2)
+prediction2 = predict(cityRate2, test)
+#prediction
+solution2 = data.frame(City = test$City, Rank = prediction2)
+solution2
+plot(cityRate2)
+varImpPlot(cityRate2)
+
+```
+
+Here we implement the idea of having two seperate datasets by splitting the data in train and test. This produces a bigger MSE and a bit less accuracy however it performs well at classifying unseen data with a cost of living and is still viable at classifying for cost of living each city. As this is a Random Forest algorithm, cross validation is unnecessary for overfitting problem due to the OOB error estimate as it is tested internally. We can also see from the commented out model that rent and local purchasing power were ineffective for the model so we decided to leave them out
+
+# Neural Net Analysis
+Here we build our neural network to try and analyze the data. We build the model with the full dataset first here. We have to first normalize the data.
+```{r}
+library(NeuralNetTools)
+library(neuralnet)
+nums = unlist(lapply(data, is.numeric))  
+dataNums = data[ , nums]
+scar <- apply(dataNums, 2, function(v) (v-min(v))/(max(v)-min(v)))
+ind <- sample(1:nrow(scar), 300)
+train <- scar[ind, ]
+test <- scar[-ind, ]
+nn = neuralnet(Cost.of.Living.Index ~ Rank + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index, data=scar, hidden=c(5,3), linear.output = TRUE)
+nn$result.matrix
+plot(nn)
+summary(nn)
+```
+We see a low error rate of .02964 from the neural network when using the full dataset to complete its task. This is quite respectable but we want to know if we are overfitting which is quite possible. Below we implement the same neural network but with a test and train seperation
+
+### Using test data for accuracy rate
+```{r}
+nn2 = neuralnet(Cost.of.Living.Index ~ Rank + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index, data=train, hidden=c(5,3), linear.output = TRUE)
+nn.results <- compute(nn2, test)
+result <- nn.results$net.result
+original_values <- max.col(scar)
+results <- max.col(result)
+mean(results == original_values)#accuracy rate
+sum((compute(nn2, test[,-2])$net.result-test[,2])^2)
+```
+The result of accuracy now for the neural network is at almost 46%. This shows to be very low. We want to see if we can make this any better. Therefore we perform K-Fold CV on the neural net below to see if there is significantly better at building the neural network to get more accurate results
+
+### K-Fold - K =
+```{r}
+# 10 fold cross validation
+k <- 10
+# Results from cv
+outs <- NULL
+# Train test split proportions
+proportion <- 0.95 # Set to 0.995 for LOOCV
+
+for(i in 1:k)
+{
+    index <- sample(1:nrow(scar), round(proportion*nrow(scar)))
+    train_cv <- scar[index, ]
+    test_cv <- scar[-index, ]
+    nn_cv <- neuralnet(Cost.of.Living.Index ~ Rank + Rent.Index + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index + Local.Purchasing.Power.Index,
+                        data = train,
+                        hidden = c(13, 10, 3),
+                        act.fct = "logistic",
+                        linear.output = FALSE)
+    
+    # Compute predictions
+    pr.nn <- compute(nn_cv, test)
+    # Extract results
+    pr.nn_ <- pr.nn$net.result
+    # Accuracy (test set)
+    original_values <- max.col(test)
+    pr.nn_2 <- max.col(pr.nn_)
+    outs[i] <- mean(pr.nn_2 == original_values)
+}
+outs
+mean(outs)
+```
+After performing the CV we realize that the neural network is about average of 47% accurate which is almost exactly of what we get above. Therefore this neural network would not be a very good choice to use to predict Cost of Living index
