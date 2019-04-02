@@ -37,7 +37,7 @@ plot(knn)
 set.seed(450)
 test<-predict(knn,newdata = testing)
 postResample(test,testing$Rank)
-
+testing
 ```
 
 #final MSE
