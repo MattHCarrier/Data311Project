@@ -337,5 +337,5 @@ for(i in 1:k)
 }
 outs
 mean(outs)
-```
+``` 
 After performing the CV we realize that the neural network is about average of 47% accurate which is almost exactly of what we get above. Therefore this neural network would not be a very good choice to use to predict Cost of Living index
