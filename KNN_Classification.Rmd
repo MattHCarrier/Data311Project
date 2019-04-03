@@ -43,7 +43,7 @@ testing
 #final MSE
 
 ```{r}
-all.MSE<-data.frame(MSE=c(793.363,379.7,39.64,6.71),Model=c("knn classification","regression tree","Multiple linear regression","Random Forest"))
+all.MSE<-data.frame(MSE=c(28.17,374,39.64,11.88,0.0296),Model=c("knn classification","regression tree","Multiple linear regression","Random Forest","neural network"))
 ```
 
 ```{r}
