@@ -5,8 +5,8 @@ date: "3/21/2019"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=FALSE, set.seed(450)}
+knitr::opts_chunk$set(echo = TRUE, cache = T)
 ```
 
 # Cleaning the data of missing points and inconsistencies
@@ -36,7 +36,10 @@ summary(cityRate1)
 prediction1 = predict(cityRate1, data)
 solution1 = data.frame(City = data$City, Cost.of.Living.Index = prediction1)
 solution1
+<<<<<<< HEAD
+=======
 plot(cityRate1)
+>>>>>>> 9aa387a21b730bd3c70597b66c1ded9abd9e5611
 varImpPlot(cityRate1)
 ```
 
@@ -44,7 +47,9 @@ Here we notice that the MSE of the random forest is quite low. The results of cl
 
 #Random Forest Analysis with test and training to predict Cost of Living
 ```{r}
+#set.seed(450)
 library(randomForest)
+library(caret)
 trainindex <- sample(1:nrow(data), 200)
 train <- droplevels(data[trainindex, ])
 test <- droplevels(data[-trainindex, ])
@@ -57,6 +62,8 @@ prediction2 = predict(cityRate2, test)
 #prediction
 solution2 = data.frame(City = test$City, Cost.of.Living.Index = prediction2)
 solution2
+mean(cityRate2$mse) #mse
+varImpPlot(cityRate2)
 ```
 
 Here we implement the idea of having two seperate datasets by splitting the data in train and test. This produces a bigger MSE and a bit less accuracy however it performs well at classifying unseen data with a cost of living and is still viable at classifying for cost of living each city. As this is a Random Forest algorithm, cross validation is unnecessary for overfitting problem due to the OOB error estimate as it is tested internally. We can also see from the commented out model that rent and local purchasing power were ineffective for the model so we decided to leave them out
@@ -81,13 +88,29 @@ We see a low error rate of .02964 from the neural network when using the full da
 
 ### Using test data for accuracy rate
 ```{r}
+apply(data,MARGIN = 2, FUN = function(x)sum(is.na(x)))
+maxs    =   apply(data,    MARGIN  =   2,  max)
+mins    =   apply(data,    MARGIN  =   2,  min)
+scaledData =     as.data.frame(scale(data, center  =   mins,   scale   =   maxs    - mins))
+
+train = sample(1:nrow(scaledData), nrow(scaledData)*0.8)
+test = -train
+training_Data = scaledData[train,]
+testing_Data = scaledData[test,]
+dim(training_Data)
+dim(testing_Data)
+
 nn2 = neuralnet(Cost.of.Living.Index ~ Rank + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index, data=train, hidden=c(5,3), linear.output = TRUE)
 nn.results <- compute(nn2, test)
 result <- nn.results$net.result
-original_values <- max.col(scar)
-results <- max.col(result)
-mean(results == original_values)#accuracy rate
-sum((compute(nn2, test[,-2])$net.result-test[,2])^2)
+pred_neuralnet.scaled = nn.results$net.result *(max(scaledData$Cost.of.Living.Index)-min(scaledData$Cost.of.Living.Index))+min(scaledData$Cost.of.Living.Index)
+real.values <- (testing_Data$Cost.of.Living.Index)*(max(data$Cost.of.Living.Index)-min(data$Cost.of.Living.Index))+min(data$Cost.of.Living.Index)
+MSE.neuralnetModel  <- sum((real.values - pred_neuralnet.scaled)^2)/nrow(testing_Data)
+MSE.neuralnetModel
+
+plot(real.values, pred_neuralnet.scaled, col='red',main='Real   vs  predicted',pch=18,cex=0.7)
+abline(0,1,lwd=2)
+legend('bottomright',legend='NN',pch=18,col='red',  bty='n')
 ```
 The result of accuracy now for the neural network is at almost 46%. This shows to be very low. We want to see if we can make this any better. Therefore we perform K-Fold CV on the neural net below to see if there is significantly better at building the neural network to get more accurate results
 

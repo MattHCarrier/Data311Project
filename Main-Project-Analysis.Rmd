@@ -80,6 +80,7 @@ Overall, this linear regression variable selection gives us an idea on which var
 
 # Multiple Linear Regression
 ```{r}
+set.seed(45)
 fit <- lm(data$Rank~data$Cost.of.Living.Index+data$Rent.Index+data$Cost.of.Living.Plus.Rent.Index+data$Groceries.Index+data$Restaurant.Price.Index+data$Local.Purchasing.Power.Index)
 summary(fit)
 ```
@@ -88,6 +89,7 @@ By performing a Multiple Linear Regression on this dataset, with "Rank" being th
 
 # Regression Tree
 ```{r}
+set.seed(450)
 library(tree)
 library(gclus)
 data1 <- data[,-2]
@@ -110,6 +112,7 @@ By removing the "Cost of Living Index" from the Regression Tree Analysis we see 
 
 
 ```{r}
+set.seed(450)
 library(tree)
 cvsimtree <- cv.tree(simtree, FUN=prune.tree, K=10)
 plot(cvsimtree, type="b")
@@ -124,6 +127,7 @@ mean((data1$Rank-test_predict)^2)
 
 ## splitting data
 ```{r}
+set.seed(450)
 library(caret)
 train<-createDataPartition(y=data$Rank,p=.7,list=F)
 training<-data[train,]
@@ -180,6 +184,7 @@ data_clean <- data[,-c(1,2)]
 ```
 PCA ANALYSIS + K-MEANS CLUSTERING:
 ```{r}
+set.seed(450)
 #ALL PRINCIPAL COMPONENTS PRESENT
 pComp <- prcomp(as.matrix(data_clean[,-c(2)]), scale = TRUE, center = TRUE)
 biplot(pComp, main="PC BiPlot")
@@ -200,6 +205,7 @@ round(pComp$rotation[,1:5],2)
 ```
 
 ```{r}
+set.seed(450)
 #Determining Number of Clusters
 withinSumSquares <- (nrow(data_clean)-1)*sum(apply(data_clean,2,var))
 for (i in 2:535) withinSumSquares[i] <- sum(kmeans(data_clean,centers=i)$withinss)
@@ -235,6 +241,7 @@ Write up:
 
 ## First draft Random Forest with no training/testing data seperation
 ```{r}
+ser.seed(450)
 library(randomForest)
 cityRate1 = randomForest(Cost.of.Living.Index ~ Rank + Rent.Index + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index + Local.Purchasing.Power.Index, data = data, importance = TRUE, ntree = 500, mtry = 2)#limit randomise variable for forest
 cityRate1
@@ -243,13 +250,14 @@ summary(cityRate1)
 prediction1 = predict(cityRate1, data)
 solution1 = data.frame(City = data$City, Cost.of.Living.Index = prediction1)
 solution1
-
+varImpPlot(cityRate1)
 ```
 
 Here we notice that the MSE of the random forest is quite low. The results of classifying the cities by cost of living is pretty accurate in many cases. Of course this is due to the fact that we are using the whole data set for both training the model and running the model.
 
 ## Random Forest Analysis with test and training to predict Cost of Living
 ```{r}
+set.seed(450)
 library(randomForest)
 trainindex <- sample(1:nrow(data), 200)
 train <- droplevels(data[trainindex, ])
@@ -263,6 +271,8 @@ prediction2 = predict(cityRate2, test)
 #prediction
 solution2 = data.frame(City = test$City, Cost.of.Living.Index = prediction2)
 solution2
+mean(cityRate2$mse) #mse
+varImpPlot(cityRate2)
 ```
 
 Here we implement the idea of having two seperate datasets by splitting the data in train and test. This produces a bigger MSE and a bit less accuracy however it performs well at classifying unseen data with a cost of living and is still viable at classifying for cost of living each city. As this is a Random Forest algorithm, cross validation is unnecessary for overfitting problem due to the OOB error estimate as it is tested internally. We can also see from the commented out model that rent and local purchasing power were ineffective for the model so we decided to leave them out
@@ -270,6 +280,7 @@ Here we implement the idea of having two seperate datasets by splitting the data
 ## Neural Net Analysis
 Here we build our neural network to try and analyze the data. We build the model with the full dataset first here. We have to first normalize the data.
 ```{r}
+set.seed(450)
 library(NeuralNetTools)
 library(neuralnet)
 nums = unlist(lapply(data, is.numeric))  
@@ -290,12 +301,10 @@ We see a low error rate of .02964 from the neural network when using the full da
 nn2 = neuralnet(Cost.of.Living.Index ~ Rank + Cost.of.Living.Plus.Rent.Index + Groceries.Index + Restaurant.Price.Index, data=train, hidden=c(5,3), linear.output = TRUE)
 nn.results <- compute(nn2, test)
 result <- nn.results$net.result
-original_values <- max.col(scar)
-results <- max.col(result)
-mean(results == original_values)#accuracy rate
-sum((compute(nn2, test[,-2])$net.result-test[,2])^2)
+#result
+sum((compute(nn2, test[,-2])$net.result-test[,2])^2) #mse
 ```
-The result of accuracy now for the neural network is at almost 46%. This shows to be very low. We want to see if we can make this any better. Therefore we perform K-Fold CV on the neural net below to see if there is significantly better at building the neural network to get more accurate results
+Even with the same test/train seperation we still get a very low erro rate of .029 MSE with the results still scaled above. We perform K-Fold CV on the neural net below to see if there is significantly better at building the neural network to get more accurate results
 
 ### K-Fold - Neural Net
 ```{r}
